@@ -9,6 +9,17 @@ const regex = {
   email: /[a-z0-9!#$%&'*+\/=?\^_`{|}~\-]+(?:\.[a-z0-9!#$%&'*+\/=?\^_`{|}~\-]+)*@(?:[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9\-]*[a-z0-9])?/i
 };
 
+const EvidenceFileSchema = new Schema({
+  path: {
+    type: String,
+    required: true
+  },
+  mimeType: {
+    type: String,
+    required: true
+  }
+});
+
 const BadgeInstanceSchema = new Schema({
   _id: {
     type: String,
@@ -36,6 +47,7 @@ const BadgeInstanceSchema = new Schema({
     type: String,
     trim: true,
   },
+  evidenceFiles: [EvidenceFileSchema],
   seen: {
     type: Boolean,
     required: true,

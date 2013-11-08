@@ -1,0 +1,21 @@
+{% extends "public/layout.html" %}
+{% block title %}{{ instance.badge.name }}{% endblock %}
+{% block body %}
+  <h1>{{ instance.badge.name }}</h1>
+  {% if instance.evidence or instance.evidenceFiles.length %}
+  <dl>
+    <dt>Evidence:</dt>
+    <dd>
+      <p>
+        {{ instance.evidence }}
+      </p>
+
+      {% for file in instance.evidenceFiles %}
+      <p><a href="/badge/evidence/{{ instance._id }}/{{ loop.index0 }}">Attachment {{ loop.index }}</a></p>
+      {% endfor %}
+    </dd>
+  </dl>
+  {% else %}
+  <h3>No evidence found for this badge</h3>
+  {% endif %}
+{% endblock %}

@@ -548,10 +548,7 @@ Badge.prototype.redeemClaimCode = function redeemClaimCode(code, email, cb) {
   if (!claim.multi && claim.claimedBy && claim.claimedBy !== email)
     return cb(null, false);
   claim.claimedBy = email;
-  Badge.temporaryEvidence.destroy(claim, function(err) {
-    if (err) return cb(err);
-    cb(null, true);
-  });
+  cb(null, true);
 };
 
 Badge.prototype.removeClaimCode = function removeClaimCode(code, cb) {
@@ -623,10 +620,12 @@ Badge.prototype.award = function award(options, callback) {
   const categories = this.categories;
   const weight = this.weight;
   const evidence = options.evidence;
+  const evidenceFiles = options.evidenceFiles;
   const instance = new BadgeInstance({
     user: email,
     badge: this.id,
     evidence: evidence,
+    evidenceFiles: evidenceFiles
   });
 
   // We don't want to fail with an error if the user already has the
@@ -649,9 +648,12 @@ Badge.prototype.award = function award(options, callback) {
   });
 };
 
-Badge.prototype.awardOrFind = function awardOrFind(email, callback) {
-  const query = { userBadgeKey: [email, this.id].join('.') };
-  this.award(email, function (err, instance) {
+Badge.prototype.awardOrFind = function awardOrFind(options, callback) {
+  if (typeof options === 'string')
+    options = {user: options};
+
+  const query = { userBadgeKey: [options.user, this.id].join('.') };
+  this.award({ user: options.user, evidenceFiles: options.evidenceFiles }, function (err, instance) {
     if (!instance) {
       BadgeInstance.findOne(query, function (err, instance) {
         if (err) return callback(err);

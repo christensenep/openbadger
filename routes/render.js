@@ -1,6 +1,7 @@
 const Issuer = require('../models/issuer');
 const Program = require('../models/program');
 const Badge = require('../models/badge');
+const BadgeInstance = require('../models/badge-instance');
 const phrases = require('../lib/phrases');
 const logger = require('../lib/logger');
 const async = require('async');
@@ -167,6 +168,28 @@ exports.criteria = function criteria(req, res) {
     badge: req.badge,
     user: req.session.user,
     csrf: req.session._csrf,
+  });
+}
+
+exports.evidence = function evidence(req, res) {
+  var email = req.query.email;
+  var badge = req.badge;
+
+  BadgeInstance.findOne({ badge: badge._id, user: email }, function (err, instance) {
+    if (err)
+      return res.send(500, err);
+    if (!instance)
+      return res.send(404);
+    instance.populate('badge', function(err) {
+      if (err)
+        return res.send(500, err);
+
+      return res.render('public/evidence.html', {
+        instance: instance,
+        user: req.session.user,
+        csrf: req.session._csrf
+      });
+    });
   });
 }
 

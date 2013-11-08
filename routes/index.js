@@ -154,6 +154,11 @@ exports.define = function defineRoutes(app) {
   app.get('/badge/criteria/:shortname', [
     findBadgeByParamShortname
   ], render.criteria);
+  app.get('/badge/evidence/:shortname', [
+    findBadgeByParamShortname
+  ], render.evidence);
+  app.get('/badge/evidence/:hash/:index', badge.getEvidenceFile);
+
   app.get('/program/meta/:programId', [
     issuer.findProgramById
   ], issuer.meta);

@@ -6,6 +6,8 @@ const BadgeInstance = require('../models/badge-instance');
 const Work = require('../models/work');
 const util = require('../lib/util');
 const async = require('async');
+const s3 = require('../lib/s3');
+const mime = require('mime');
 
 function handleTagInput(input) {
   return (
@@ -146,6 +148,36 @@ exports.assertion = function assertion(req, res) {
   });
 };
 
+exports.getEvidenceFile = function getEvidenceFile(req, res) {
+  var assertionId = req.param('hash');
+  var evidenceIndex = req.param('index');
+
+  BadgeInstance.findOne({ _id: assertionId }, function (err, instance) {
+    if (err)
+      return res.send(500, err);
+    if (!instance)
+      return res.send(404);
+
+    if (evidenceIndex < 0 || evidenceIndex >= instance.evidenceFiles.length)
+      return res.send(404);
+
+    var evidence = instance.evidenceFiles[evidenceIndex];
+
+    s3.get(evidence.path).on('response', function(s) {
+      if (err) return res.json(500, {
+        status: 'error',
+        reason: 'cannot retrieve evidence'
+      });
+      res.type(evidence.mimeType);
+      var ext = mime.extension(evidence.mimeType);
+      var filename = 'evidence-' + evidenceIndex + (ext ? '.' + ext : '');
+      res.set('Content-Disposition',
+        'attachment; filename="' + filename + '"');
+      s.pipe(res);
+    }).end();
+  });
+};
+
 exports.meta = function meta(req, res) {
   req.badge.populate('program', function(err) {
     if (err)
@@ -242,6 +274,7 @@ exports.awardToUser = function awardToUser(req, res, next) {
   var email = (form.email || '').trim();
   var code = (form.code || '').trim();
   var badge = req.badge;
+  var evidenceFiles = req.claim.evidence;
 
   badge.redeemClaimCode(code, email, function(err, claimSuccess) {
     if (err) return res.send(reportError(err));
@@ -251,7 +284,7 @@ exports.awardToUser = function awardToUser(req, res, next) {
     if (claimSuccess === null)
       return res.send({ status: 'not-found' });
 
-    badge.awardOrFind(email, function (err, instance) {
+    badge.awardOrFind({ user: email, evidenceFiles: evidenceFiles }, function (err, instance) {
       if (err) return res.send(reportError(err));
       badge.save(function (err) {
         if (err) return res.send(reportError(err));

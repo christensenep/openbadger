@@ -373,6 +373,7 @@ function tryAwardingBadge(opts, res, successCb) {
   const badge = opts.badge;
   const email = opts.email;
   const evidence = opts.evidence;
+  const evidenceFiles = opts.evidenceFiles;
 
   if (!badge)
     return res.json(404, {status: 'error', reason: 'badge not found'});
@@ -381,7 +382,8 @@ function tryAwardingBadge(opts, res, successCb) {
 
   return badge.award({
     email: email,
-    evidence: evidence
+    evidence: evidence,
+    evidenceFiles: evidenceFiles
   }, function (err, instance, autoAwardedInstances) {
     if (err) {
       // TODO: log error properly
@@ -484,10 +486,12 @@ exports.awardBadgeFromClaimCode = function(req, res, next) {
     return res.json(400, {status: 'error', reason: 'missing email address'});
 
   getUnclaimedBadgeFromCode(code, req, res, next, function(badge) {
+    var claim = badge.getClaimCode(code);
     tryAwardingBadge({
       badge: badge,
       email: email,
-      evidence: evidence
+      evidence: evidence,
+      evidenceFiles: claim.evidence
     }, res, function(success) {
       async.series([
         badge.redeemClaimCode.bind(badge, code, email),
