@@ -172,10 +172,9 @@ exports.criteria = function criteria(req, res) {
 }
 
 exports.evidence = function evidence(req, res) {
-  var email = req.query.email;
-  var badge = req.badge;
+  var assertionId = req.param('hash');
 
-  BadgeInstance.findOne({ badge: badge._id, user: email }, function (err, instance) {
+  BadgeInstance.findOne({ _id: assertionId }, function (err, instance) {
     if (err)
       return res.send(500, err);
     if (!instance)
